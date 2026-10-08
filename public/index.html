@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SecureShop - E-Commerce Security Laboratory</title>
+  <!-- Google Fonts & FontAwesome -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="theme-dark">
+
+  <!-- Top Security Control Banner -->
+  <div class="security-banner" id="securityBanner">
+    <div class="banner-container">
+      <div class="banner-status">
+        <span class="status-indicator-dot pulse" id="modeDot"></span>
+        <span class="banner-label">LAB SECURITY MODE:</span>
+        <strong id="currentModeLabel" class="vulnerable-text">VULNERABLE (RED TEAM ATTACK TARGET)</strong>
+      </div>
+      <div class="banner-controls">
+        <label class="toggle-switch">
+          <input type="checkbox" id="securityToggle" onchange="toggleSecurityMode(this.checked)">
+          <span class="slider round"></span>
+        </label>
+        <span class="toggle-text" id="toggleStateText">Enable Remediated Mode</span>
+        <button class="btn btn-sm btn-lab" onclick="openLabModal()">
+          <i class="fa-solid fa-flask"></i> Security Lab Dashboard
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Header & Navigation -->
+  <header class="main-header">
+    <div class="header-container">
+      <a href="#" class="brand-logo" onclick="renderProducts()">
+        <div class="logo-icon"><i class="fa-solid fa-shield-halved"></i></div>
+        <div class="logo-text">Secure<span>Shop</span> <span class="badge badge-lab">AppSec Lab</span></div>
+      </a>
+
+      <!-- Search Bar (SQLi Vulnerable Endpoint) -->
+      <div class="search-box">
+        <form onsubmit="handleSearch(event)">
+          <div class="search-input-wrapper">
+            <i class="fa-solid fa-magnifying-glass search-icon"></i>
+            <input type="text" id="searchInput" placeholder="Search products... (Try SQLi payload in Vulnerable Mode)" autocomplete="off">
+            <button type="submit" class="btn-search">Search</button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Navigation Actions -->
+      <nav class="nav-actions">
+        <button class="nav-btn" onclick="openCartModal()" id="cartBtn">
+          <i class="fa-solid fa-cart-shopping"></i>
+          <span>Cart</span>
+          <span class="cart-badge" id="cartBadge">0</span>
+        </button>
+
+        <div id="authNavContainer">
+          <!-- Populated by JavaScript (Login / Profile) -->
+        </div>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Hero Section -->
+  <section class="hero-section">
+    <div class="hero-content">
+      <div class="hero-badge"><i class="fa-solid fa-bug"></i> RED TEAM LAB ASSIGNMENT TARGET</div>
+      <h1>Build &rarr; Attack &rarr; Identify &rarr; Fix &rarr; Retest</h1>
+      <p>Welcome to <strong>SecureShop</strong>, an internal e-commerce web platform engineered for application security assessments, OWASP ZAP automated DAST scans, and manual vulnerability remediation verification.</p>
+      
+      <div class="hero-actions">
+        <button class="btn btn-primary" onclick="scrollToCatalog()">
+          <i class="fa-solid fa-store"></i> Browse Catalog
+        </button>
+        <button class="btn btn-secondary" onclick="openLabModal()">
+          <i class="fa-solid fa-triangle-exclamation"></i> View Lab Vulnerabilities
+        </button>
+        <button class="btn btn-outline" onclick="exportSecurityReport()">
+          <i class="fa-solid fa-file-pdf"></i> Export Evidence Report
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Main Storefront Container -->
+  <main class="main-content" id="catalogSection">
+    
+    <!-- Category & Filter Controls -->
+    <div class="filter-bar">
+      <div class="category-pills">
+        <button class="pill active" onclick="filterCategory('All', this)">All Hardware & Software</button>
+        <button class="pill" onclick="filterCategory('Hardware', this)"><i class="fa-solid fa-server"></i> Hardware</button>
+        <button class="pill" onclick="filterCategory('Software', this)"><i class="fa-solid fa-code"></i> Software</button>
+        <button class="pill" onclick="filterCategory('Accessories', this)"><i class="fa-solid fa-key"></i> Accessories</button>
+      </div>
+      <div class="search-status-message" id="searchStatusMsg"></div>
+    </div>
+
+    <!-- Product Grid -->
+    <div class="products-grid" id="productsGrid">
+      <!-- Dynamic Product Cards Injected Here -->
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer class="main-footer">
+    <div class="footer-container">
+      <div class="footer-col">
+        <div class="brand-logo footer-logo">
+          <i class="fa-solid fa-shield-halved"></i> Secure<span>Shop</span>
+        </div>
+        <p>Intentionally vulnerable web application for OWASP ZAP DAST scans and application security testing.</p>
+      </div>
+      <div class="footer-col">
+        <h4>Target Environment</h4>
+        <p>URL: <code>http://localhost:8080</code></p>
+        <p>OWASP Top 10 Coverage: A01, A03, A05, A06, A07, A09</p>
+      </div>
+      <div class="footer-col">
+        <h4>Assignment Mode</h4>
+        <p id="footerModeText">Active Mode: <strong>Vulnerable</strong></p>
+        <p><a href="#" onclick="openLabModal()">Open Security Lab Guide &rarr;</a></p>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      &copy; 2026 SecureShop AppSec Lab — Fictional Security Engineering Laboratory
+    </div>
+  </footer>
+
+  <!-- ==================== MODALS ==================== -->
+
+  <!-- 1. Security Lab & OWASP ZAP Assistant Modal -->
+  <div class="modal" id="labModal">
+    <div class="modal-content modal-xl glass-panel">
+      <div class="modal-header">
+        <h2><i class="fa-solid fa-flask"></i> Security Lab Dashboard & Vulnerability Guide</h2>
+        <button class="close-btn" onclick="closeModal('labModal')">&times;</button>
+      </div>
+      <div class="modal-body">
+        
+        <div class="lab-tabs">
+          <button class="lab-tab active" onclick="switchLabTab('labVulnerabilities', this)">
+            <i class="fa-solid fa-bug"></i> Vulnerability Matrix (4+ OWASP)
+          </button>
+          <button class="lab-tab" onclick="switchLabTab('labZapGuide', this)">
+            <i class="fa-solid fa-crosshairs"></i> OWASP ZAP Scan Instructions
+          </button>
+          <button class="lab-tab" onclick="switchLabTab('labPayloads', this)">
+            <i class="fa-solid fa-terminal"></i> Exploit Payload Helper
+          </button>
+          <button class="lab-tab" onclick="switchLabTab('labReport', this)">
+            <i class="fa-solid fa-chart-line"></i> Before vs After Evidence Report
+          </button>
+        </div>
+
+        <!-- Tab 1: Vulnerability Matrix -->
+        <div class="lab-tab-content active" id="labVulnerabilities">
+          <p class="tab-lead">Below are the implemented controlled lab security weaknesses across OWASP Top 10 categories, complete with outdated component declarations:</p>
+          
+          <div class="vulnerability-grid">
+            
+            <!-- A01 -->
+            <div class="vuln-card">
+              <div class="vuln-header category-a01">
+                <span class="vuln-code">A01:2021</span>
+                <h3>Broken Access Control (IDOR & Admin Exposure)</h3>
+              </div>
+              <div class="vuln-body">
+                <p><strong>Weakness:</strong> Insecure Direct Object Reference on <code>/api/orders/:id</code> and unauthenticated access to <code>/api/admin/users</code>.</p>
+                <p><strong>Vulnerable Mode:</strong> Any logged-in user can view invoice data of Order #1001 or #1003 by changing the URL parameter. Unauthenticated users can access the full admin user directory.</p>
+                <p><strong>Remediated Mode:</strong> Enforces session ownership checks (<code>req.user.id === order.user_id</code>) and restricts <code>/api/admin/users</code> to role <code>admin</code>.</p>
+                <button class="btn btn-sm btn-outline" onclick="testIdorExploit()">Run IDOR Test Payload</button>
+              </div>
+            </div>
+
+            <!-- A03 -->
+            <div class="vuln-card">
+              <div class="vuln-header category-a03">
+                <span class="vuln-code">A03:2021</span>
+                <h3>Injection (SQL Injection & Reflected XSS)</h3>
+              </div>
+              <div class="vuln-body">
+                <p><strong>Weakness:</strong> Raw SQL string concatenation in Product Search (<code>/api/products/search?q=</code>).</p>
+                <p><strong>Vulnerable Mode:</strong> Unsanitized input allows <code>UNION SELECT</code> queries to extract hash data or drop tables.</p>
+                <p><strong>Remediated Mode:</strong> Uses parameterized SQLite queries (<code>WHERE name LIKE ?</code>) and escapes user output.</p>
+                <button class="btn btn-sm btn-outline" onclick="fillSqliPayload()">Fill Search with SQLi Payload</button>
+              </div>
+            </div>
+
+            <!-- A05 -->
+            <div class="vuln-card">
+              <div class="vuln-header category-a05">
+                <span class="vuln-code">A05:2021</span>
+                <h3>Security Misconfiguration</h3>
+              </div>
+              <div class="vuln-body">
+                <p><strong>Weakness:</strong> Missing Security Headers (CSP, X-Frame-Options) & Verbose SQL Stack Trace Exposure.</p>
+                <p><strong>Vulnerable Mode:</strong> Server reveals <code>X-Powered-By: Express/4.18.2</code> and returns detailed error traces on 500 status codes.</p>
+                <p><strong>Remediated Mode:</strong> Applies Helmet headers, suppresses header disclosure, and serves generic error responses.</p>
+              </div>
+            </div>
+
+            <!-- A06 -->
+            <div class="vuln-card">
+              <div class="vuln-header category-a06">
+                <span class="vuln-code">A06:2021</span>
+                <h3>Vulnerable and Outdated Components</h3>
+              </div>
+              <div class="vuln-body">
+                <p><strong>Outdated Dependencies Documented:</strong></p>
+                <ul class="cve-list">
+                  <li><code>jsonwebtoken@8.5.1</code> (CVE-2022-23529) — Insecure key verification & algorithm none flaw</li>
+                  <li><code>lodash@4.17.11</code> (CVE-2019-10744) — Prototype Pollution vulnerability</li>
+                  <li><code>ejs@3.1.5</code> (CVE-2022-29078) — Server-Side Template Injection</li>
+                </ul>
+              </div>
+            </div>
+
+            <!-- A07 -->
+            <div class="vuln-card">
+              <div class="vuln-header category-a07">
+                <span class="vuln-code">A07:2021</span>
+                <h3>Identification & Auth Failures</h3>
+              </div>
+              <div class="vuln-body">
+                <p><strong>Weakness:</strong> Weak hardcoded JWT secret (<code>secureshop-secret-123</code>) & lack of login rate-limiting.</p>
+                <p><strong>Remediated Mode:</strong> Uses strong environment secret key and validates algorithm integrity.</p>
+              </div>
+            </div>
+
+            <!-- A09 -->
+            <div class="vuln-card">
+              <div class="vuln-header category-a09">
+                <span class="vuln-code">A09:2021</span>
+                <h3>Security Logging Failures</h3>
+              </div>
+              <div class="vuln-body">
+                <p><strong>Weakness:</strong> Plaintext login passwords written to server stdout/audit logs during failed login attempts.</p>
+                <p><strong>Remediated Mode:</strong> Passwords redacted as <code>[REDACTED]</code> and audit logs stored securely in database.</p>
+                <button class="btn btn-sm btn-outline" onclick="loadAuditLogs()">View Audit Log Stream</button>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Tab 2: OWASP ZAP Guide -->
+        <div class="lab-tab-content" id="labZapGuide">
+          <div class="zap-guide-box">
+            <h3><i class="fa-solid fa-crosshairs"></i> How to Scan SecureShop with OWASP ZAP</h3>
+            <ol class="guide-steps">
+              <li>
+                <strong>Target Configuration:</strong> Open OWASP ZAP and set the target URL to:
+                <div class="code-copy">
+                  <code>http://localhost:8080</code>
+                  <button class="btn-copy" onclick="copyToClipboard('http://localhost:8080')">Copy URL</button>
+                </div>
+              </li>
+              <li>
+                <strong>Phase 1 Scan (Vulnerable Mode):</strong> Ensure the Top Security Banner is set to <span class="vulnerable-text">VULNERABLE</span> mode. Run an <em>Automated Quick Scan</em> or <em>Spider + Active Scan</em> in ZAP.
+              </li>
+              <li>
+                <strong>Observe Alerts:</strong> OWASP ZAP will discover:
+                <ul>
+                  <li>Missing Anti-clickjacking Header (X-Frame-Options)</li>
+                  <li>Content Security Policy (CSP) Header Not Set</li>
+                  <li>Server Leaks Version Information (X-Powered-By)</li>
+                  <li>SQL Injection in <code>/api/products/search?q=</code> parameter</li>
+                  <li>Absence of Anti-CSRF Tokens</li>
+                </ul>
+              </li>
+              <li>
+                <strong>Phase 2 Retest (Remediated Mode):</strong> Click the Top Banner toggle switch to enable <span class="remediated-text">REMEDIATED MODE</span>. Re-run the OWASP ZAP Active Scan to confirm that high & medium alerts are resolved!
+              </li>
+            </ol>
+          </div>
+        </div>
+
+        <!-- Tab 3: Payload Helper -->
+        <div class="lab-tab-content" id="labPayloads">
+          <h3><i class="fa-solid fa-code"></i> Manual Vulnerability Validation Payloads</h3>
+          <div class="payload-table-wrapper">
+            <table class="payload-table">
+              <thead>
+                <tr>
+                  <th>Vulnerability</th>
+                  <th>Attack Payload / Request</th>
+                  <th>Expected Vulnerable Behavior</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>A03: SQL Injection</strong></td>
+                  <td><code>' UNION SELECT 1, username, password, email, 50, 5 FROM users--</code></td>
+                  <td>Returns user database credentials inside search product listing.</td>
+                  <td><button class="btn btn-xs btn-primary" onclick="executePayload('sqli')">Test SQLi</button></td>
+                </tr>
+                <tr>
+                  <td><strong>A01: IDOR (Order History)</strong></td>
+                  <td><code>GET /api/orders/1003</code> (Logged in as john_doe)</td>
+                  <td>Returns Order #1003 details belonging to Admin user.</td>
+                  <td><button class="btn btn-xs btn-primary" onclick="executePayload('idor')">Test IDOR</button></td>
+                </tr>
+                <tr>
+                  <td><strong>A01: Unauth Admin Access</strong></td>
+                  <td><code>GET /api/admin/users</code> (No Auth Token)</td>
+                  <td>Returns 200 OK with full user list and password hashes.</td>
+                  <td><button class="btn btn-xs btn-primary" onclick="executePayload('admin')">Test Admin Exposure</button></td>
+                </tr>
+                <tr>
+                  <td><strong>A05: Missing CSP & Headers</strong></td>
+                  <td><code>curl -I http://localhost:8080/api/products</code></td>
+                  <td>Response header contains <code>X-Powered-By: Express/4.18.2</code> and lacks CSP.</td>
+                  <td><button class="btn btn-xs btn-primary" onclick="executePayload('headers')">Check Headers</button></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div id="payloadOutput" class="payload-output-box hidden"></div>
+        </div>
+
+        <!-- Tab 4: Before vs After Report -->
+        <div class="lab-tab-content" id="labReport">
+          <div class="report-container">
+            <div class="report-header">
+              <h3><i class="fa-solid fa-file-contract"></i> Security Assessment Summary & Retest Report</h3>
+              <button class="btn btn-primary" onclick="exportSecurityReport()">
+                <i class="fa-solid fa-download"></i> Download Report (Markdown/JSON)
+              </button>
+            </div>
+            
+            <div class="report-grid">
+              <div class="report-card vuln-bg">
+                <h4>Phase 1: Vulnerable Scan (Before)</h4>
+                <ul>
+                  <li><strong>Target:</strong> <code>http://localhost:8080</code></li>
+                  <li><strong>ZAP Alerts:</strong> 5 High/Medium Alerts</li>
+                  <li><strong>SQL Injection:</strong> Confirmed in Search Endpoint</li>
+                  <li><strong>IDOR:</strong> Confirmed in Order Details API</li>
+                  <li><strong>Security Headers:</strong> Missing (CSP, X-Frame-Options)</li>
+                  <li><strong>Outdated Libraries:</strong> lodash 4.17.11, jsonwebtoken 8.5.1</li>
+                </ul>
+              </div>
+
+              <div class="report-card remediated-bg">
+                <h4>Phase 2: Remediated Retest (After)</h4>
+                <ul>
+                  <li><strong>Target:</strong> <code>http://localhost:8080</code></li>
+                  <li><strong>ZAP Alerts:</strong> 0 High/Medium Alerts</li>
+                  <li><strong>SQL Injection:</strong> Remediated (Parameterized Query)</li>
+                  <li><strong>IDOR:</strong> Remediated (Session Ownership Enforced)</li>
+                  <li><strong>Security Headers:</strong> Applied (Helmet Headers & CSP)</li>
+                  <li><strong>Status:</strong> Security Baseline Validated</li>
+                </ul>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. Login / Register Modal -->
+  <div class="modal" id="authModal">
+    <div class="modal-content glass-panel">
+      <div class="modal-header">
+        <h2 id="authModalTitle"><i class="fa-solid fa-user-lock"></i> User Login</h2>
+        <button class="close-btn" onclick="closeModal('authModal')">&times;</button>
+      </div>
+      <div class="modal-body">
+        
+        <!-- Login Form -->
+        <form id="loginForm" onsubmit="handleLogin(event)">
+          <div class="form-group">
+            <label for="loginUsername">Username</label>
+            <input type="text" id="loginUsername" placeholder="e.g. john_doe or admin" required>
+          </div>
+          <div class="form-group">
+            <label for="loginPassword">Password</label>
+            <input type="password" id="loginPassword" placeholder="e.g. password123 or admin123" required>
+          </div>
+          <div class="demo-credentials">
+            <small><strong>Demo Accounts:</strong></small>
+            <small>Customer: <code>john_doe</code> / <code>password123</code></small>
+            <small>Admin: <code>admin</code> / <code>admin123</code></small>
+          </div>
+          <button type="submit" class="btn btn-primary btn-block">Sign In</button>
+          <p class="auth-toggle-link">Don't have an account? <a href="#" onclick="toggleAuthForm('register')">Register here</a></p>
+        </form>
+
+        <!-- Register Form -->
+        <form id="registerForm" onsubmit="handleRegister(event)" class="hidden">
+          <div class="form-group">
+            <label for="regUsername">Username</label>
+            <input type="text" id="regUsername" placeholder="Choose a username" required>
+          </div>
+          <div class="form-group">
+            <label for="regEmail">Email Address</label>
+            <input type="email" id="regEmail" placeholder="your.name@example.com" required>
+          </div>
+          <div class="form-group">
+            <label for="regPassword">Password</label>
+            <input type="password" id="regPassword" placeholder="Create a password" required>
+          </div>
+          <button type="submit" class="btn btn-primary btn-block">Create Account</button>
+          <p class="auth-toggle-link">Already have an account? <a href="#" onclick="toggleAuthForm('login')">Sign in here</a></p>
+        </form>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. Product Details Modal -->
+  <div class="modal" id="productModal">
+    <div class="modal-content glass-panel">
+      <div class="modal-header">
+        <h2 id="modalProductName">Product Details</h2>
+        <button class="close-btn" onclick="closeModal('productModal')">&times;</button>
+      </div>
+      <div class="modal-body" id="productModalBody">
+        <!-- Injected by JavaScript -->
+      </div>
+    </div>
+  </div>
+
+  <!-- 4. Shopping Cart & Checkout Modal -->
+  <div class="modal" id="cartModal">
+    <div class="modal-content modal-lg glass-panel">
+      <div class="modal-header">
+        <h2><i class="fa-solid fa-cart-shopping"></i> Your Shopping Cart</h2>
+        <button class="close-btn" onclick="closeModal('cartModal')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div id="cartItemsContainer">
+          <!-- Injected by JavaScript -->
+        </div>
+
+        <div class="cart-summary" id="cartSummary">
+          <div class="summary-line">
+            <span>Subtotal:</span>
+            <strong id="cartSubtotal">$0.00</strong>
+          </div>
+          <div class="summary-line">
+            <span>Shipping:</span>
+            <span>FREE</span>
+          </div>
+          <div class="summary-line total-line">
+            <span>Total Amount:</span>
+            <strong id="cartTotal">$0.00</strong>
+          </div>
+
+          <div class="checkout-form mt-4">
+            <div class="form-group">
+              <label for="shippingAddress">Shipping Address</label>
+              <input type="text" id="shippingAddress" placeholder="123 Security Way, Cyber City, NY 10001">
+            </div>
+            <button class="btn btn-primary btn-block btn-lg" onclick="handleCheckout()">
+              <i class="fa-solid fa-credit-card"></i> Complete Checkout
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- 5. User Profile & Order History Modal -->
+  <div class="modal" id="profileModal">
+    <div class="modal-content modal-lg glass-panel">
+      <div class="modal-header">
+        <h2><i class="fa-solid fa-user-gear"></i> User Profile & Order History</h2>
+        <button class="close-btn" onclick="closeModal('profileModal')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="profile-header-card">
+          <div class="profile-avatar"><i class="fa-solid fa-user-shield"></i></div>
+          <div class="profile-info">
+            <h3 id="profileUsername">User</h3>
+            <p id="profileEmail">email@example.com</p>
+            <span class="badge badge-primary" id="profileRole">Role: User</span>
+          </div>
+        </div>
+
+        <div class="orders-section mt-4">
+          <h3><i class="fa-solid fa-box-open"></i> Your Order History</h3>
+          <div class="idor-lab-hint">
+            <small><i class="fa-solid fa-circle-info"></i> <strong>IDOR Testing Note:</strong> In Vulnerable Mode, click "Inspect Raw Order" and edit the order ID to view other users' invoices!</small>
+          </div>
+          <div id="orderHistoryContainer" class="orders-list">
+            <!-- Injected by JS -->
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 6. Admin Management Portal Modal -->
+  <div class="modal" id="adminModal">
+    <div class="modal-content modal-xl glass-panel">
+      <div class="modal-header">
+        <h2><i class="fa-solid fa-user-ninja"></i> SecureShop Administrative Console</h2>
+        <button class="close-btn" onclick="closeModal('adminModal')">&times;</button>
+      </div>
+      <div class="modal-body">
+        
+        <div class="admin-grid">
+          <!-- Admin Action 1: User Management Directory -->
+          <div class="admin-card">
+            <h3><i class="fa-solid fa-users-gear"></i> Registered User Directory (A01 Unauth Exposure)</h3>
+            <div class="table-responsive">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>Username</th>
+                    <th>Email</th>
+                    <th>Role</th>
+                  </tr>
+                </thead>
+                <tbody id="adminUserTableBody">
+                  <!-- Injected by JS -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Admin Action 2: Add New Product -->
+          <div class="admin-card">
+            <h3><i class="fa-solid fa-plus-circle"></i> Add New Product to Catalog</h3>
+            <form onsubmit="handleAdminAddProduct(event)">
+              <div class="form-group">
+                <label>Product Name</label>
+                <input type="text" id="adminProdName" required placeholder="e.g. Quantum Key Distributing Dongle">
+              </div>
+              <div class="form-group">
+                <label>Category</label>
+                <select id="adminProdCategory">
+                  <option value="Hardware">Hardware</option>
+                  <option value="Software">Software</option>
+                  <option value="Accessories">Accessories</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Price ($)</label>
+                <input type="number" step="0.01" id="adminProdPrice" required placeholder="199.99">
+              </div>
+              <div class="form-group">
+                <label>Description</label>
+                <textarea id="adminProdDesc" rows="2" placeholder="Brief technical specifications"></textarea>
+              </div>
+              <button type="submit" class="btn btn-primary btn-block">Add Product</button>
+            </form>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- Notification Toast Container -->
+  <div id="toastContainer" class="toast-container"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>
